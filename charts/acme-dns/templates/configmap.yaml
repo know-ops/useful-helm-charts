@@ -1,0 +1,69 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "acme-dns.fullname" . }}
+  labels:
+    {{- include "acme-dns.labels" . | nindent 4 }}
+data:
+  config.cfg: |-
+    [general]
+    # DNS interface. Note that systemd-resolved may reserve port 53 on 127.0.0.53
+    # In this case acme-dns will error out and you will need to define the listening interface
+    # for example: listen = "127.0.0.1:53"
+    listen = {{ .Values.config.listen | quote }}
+    # protocol, "both", "both4", "both6", "udp", "udp4", "udp6" or "tcp", "tcp4", "tcp6"
+    protocol = {{ .Values.config.protocol | quote }}
+    # domain name to serve the requests off of
+    domain = {{ .Values.config.domain | quote }}
+    # zone name server
+    nsname = {{ .Values.config.ns.name | quote }}
+    # admin email address, where @ is substituted with .
+    nsadmin = {{ .Values.config.ns.admin | quote }}
+    # predefined records served in addition to the TXT
+    records = [
+      # specify that auth.example.org will resolve any *.auth.example.org records
+      "{{ .Values.config.domain }}. NS {{ .Values.config.ns.name }}.",
+    ]
+    # debug messages from CORS etc
+    debug = {{ .Values.config.debug }}
+
+    [database]
+    # Database engine to use, sqlite3 or postgres
+    engine = {{ .Values.config.database.engine | quote }}
+    # Connection string, filename for sqlite3 and postgres://$username:$password@$host/$db_name for postgres
+    # Please note that the default Docker image uses path /var/lib/acme-dns/acme-dns.db for sqlite3
+    connection = {{ .Values.config.database.connection | quote }}
+    # connection = "postgres://user:password@localhost/acmedns_db"
+
+    [api]
+    # listen ip eg. 127.0.0.1
+    ip = {{ .Values.config.api.ip | quote }}
+    # disable registration endpoint
+    disable_registration = {{ .Values.config.api.disable_registration }}
+    # listen port, eg. 443 for default HTTPS
+    port = {{ .Values.config.api.port | quote }}
+    # possible values: "letsencrypt", "letsencryptstaging", "cert", "none"
+    tls = {{ .Values.config.api.tls.source | quote }}
+    # only used if tls = "cert"
+    tls_cert_privkey = {{ .Values.config.api.tls.cert.privkey | quote }}
+    tls_cert_fullchain = {{ .Values.config.api.tls.cert.fullchain | quote }}
+    # only used if tls = "letsencrypt"
+    acme_cache_dir = {{ .Values.config.api.cache_dir | quote }}
+    # CORS AllowOrigins, wildcards can be used
+    corsorigins = [
+        "*"
+    ]
+    # use HTTP header to get the client ip
+    use_header = {{ .Values.config.api.header.use }}
+    # header name to pull the ip address / list of ip addresses from
+    header_name = {{ .Values.config.api.header.name | quote }}
+
+    [logconfig]
+    # logging level: "error", "warning", "info" or "debug"
+    loglevel = {{ .Values.config.log.level | quote }}
+    # possible values: stdout, TODO file & integrations
+    logtype = {{ .Values.config.log.type | quote }}
+    # file path for logfile TODO
+    # logfile = "./acme-dns.log"
+    # format, either "json" or "text"
+    logformat = {{ .Values.config.log.format | quote }}
